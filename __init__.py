@@ -30,12 +30,12 @@ classes = ()
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    # bpy.types.Scene.my_tool = bpy.props.PointerProperty(type=RenderMyProperties)
+    bpy.types.Scene.my_tool = bpy.props.PointerProperty(type=video360RenderMyProperties)
 
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
-    # del bpy.types.Scene.my_tool
+    del bpy.types.Scene.my_tool
 
 if __name__ == "__main__":
     register()
