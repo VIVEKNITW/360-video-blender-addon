@@ -1,5 +1,6 @@
-import bpy
-from .video360_helper_functions import deselect, duplicate_items, join_items, origin_to_gem, obj_to_org, make_child, emptytocenter, hidden_status, hide
+import bpy, math
+from .video360_helper_functions import check_obj, duplicate_items, join_items, origin_to_gem, add_empty, make_child, emptytocenter, hide, white_background, select_activate, camera_view, delete_obj, makeparent, hidden_status, delete_extra_objects
+
 class Video_objectstocenter(bpy.types.Operator):
     """ """
     bl_label = "Objects to center"
@@ -8,30 +9,36 @@ class Video_objectstocenter(bpy.types.Operator):
     
     
     def execute(self, context):
-        my_list = bpy.context.selected_objects
-        
-        deselect()
-        
-        duplicate_list = duplicate_items(my_list)
-          
-        deselect()
-        
-        join_items(duplicate_list)
-        
-        origin_to_gem(bpy.data.objects["joined"])
-        
-        bpy.ops.view3d.snap_cursor_to_selected()
-        
-        obj_to_org(bpy.data.objects["joined"])
-        
-        make_child(my_list, bpy.data.objects['empty_parent'])
-        
-        emptytocenter(bpy.data.objects['empty_parent'])
-        
-        hide(bpy.data.objects['joined'])
-        
+        global joined, initial_objects_list_name
 
+        initial_objects_list = list(bpy.context.selected_objects)
+        initial_objects_list_name = [item.name for item in list(bpy.context.selected_objects)]
+
+        if len(initial_objects_list) >1:
+            joined = " &".join(item for item in initial_objects_list_name)
+        else:
+            joined = initial_objects_list_name[0] + ' joined'
+
+        status = check_obj(joined)
+        if status:
+            pass
+
+        else:       
+            duplicate_list = duplicate_items(initial_objects_list, joined)      
+            join_items(duplicate_list, joined)
         
+            origin_to_gem(bpy.data.objects[joined])
+        
+            bpy.ops.view3d.snap_cursor_to_selected()
+        
+            empty_name = add_empty(bpy.data.objects[joined], joined)
+        
+            make_child(initial_objects_list, bpy.data.objects[empty_name])
+        
+            emptytocenter(bpy.data.objects[empty_name])
+        
+            hide(bpy.data.objects[joined])
+
         return {'FINISHED'}
     
         
@@ -40,43 +47,10 @@ class Video_camera(bpy.types.Operator):
     bl_label = "Add camera"
     bl_idname = "object.addcamera"
     bl_options = {"REGISTER", "UNDO"}
-    
-    
-    
-    
-    
-    
-    def draw(self, context):
-        layout = self.layout
-        layout.prop(self, 'preset_enum')
         
     
     def execute(self, context):
-        bpy.context.scene.use_nodes = True
-        tree = bpy.context.scene.node_tree
-        
-        for node in tree.nodes:
-            tree.nodes.remove(node)
-        
-        my_node1 = tree.nodes.new(type = 'CompositorNodeRLayers')
-        my_node1.location = 0,0
-        
-        my_node2 = tree.nodes.new(type = 'CompositorNodeAlphaOver')
-        my_node2.location = 300,0
-        
-        my_node3 = tree.nodes.new(type = 'CompositorNodeComposite')
-        my_node3.location = 500,0
-        
-        bpy.data.scenes["Scene"].node_tree.nodes["Alpha Over"].premul = 1
-
-        links = tree.links
-        link1 = links.new(my_node1.outputs[0], my_node2.inputs[2])
-        link2 = links.new(my_node2.outputs[0], my_node3.inputs[0])
-        
-        bpy.context.scene.render.film_transparent = True
-        bpy.context.scene.view_settings.view_transform = 'Standard'
-        
-        
+        white_background()
         
         dimensions = bpy.data.objects['joined'].dimensions
         rad = math.sqrt((dimensions[0]/2)**2 + (dimensions[1]/2)**2 + (dimensions[2]/2)**2)
@@ -98,6 +72,10 @@ class Video_camera(bpy.types.Operator):
         bpy.ops.transform.transform(mode='ALIGN')
         bpy.context.object.name = '360_empty'
 
+        status = check_obj('my_cam')
+        if status:
+            delete_obj(bpy.data.objects['my_cam'])
+
         bpy.ops.object.camera_add(enter_editmode=False, align='VIEW')
         bpy.context.object.name = 'my_cam'
         bpy.context.object.data.type = 'ORTHO'
@@ -107,7 +85,6 @@ class Video_camera(bpy.types.Operator):
         
         
         camera_view()
-        
         
         makeparent()
         select_activate(bpy.data.objects["360_empty"])
@@ -148,12 +125,18 @@ class Video_saveanimation(bpy.types.Operator):
         bpy.context.scene.render.filepath = filepath+filename
         bpy.ops.render.render(animation=True)
         
+        return {'FINISHED'}
         
-        del_objects = ['joined', 'my_path', 'my_cam', "360_empty", 'empty_parent']
-        for obj in del_objects:
-            unhide(bpy.data.objects[obj])
-            select_activate(bpy.data.objects[obj])
-            bpy.ops.object.delete()
-        
+
+class Image_OT_Clear(bpy.types.Operator):
+    """ """
+    bl_label = "Clear"
+    bl_idname = "object.clear"
+    bl_options = {"REGISTER", "UNDO"}
+    
+    def execute(self, context):
+               
+        delete_extra_objects(initial_objects_list_name)     
+
         return {'FINISHED'}
     

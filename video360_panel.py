@@ -17,7 +17,6 @@ class Video(bpy.types.Panel):
         row.operator("object.addcamera")
         row = layout.row()
         layout.prop(mytool, 'axis_selection')
-
         row = layout.row()
         row.prop(context.scene.camera.data, 'ortho_scale')
         row = layout.row()
@@ -30,3 +29,6 @@ class Video(bpy.types.Panel):
         row.prop(mytool, "myfilepath")
         row = layout.row()
         row.operator("object.saveanimation") 
+        row = layout.row()
+        row.operator("object.clear") 
+        
