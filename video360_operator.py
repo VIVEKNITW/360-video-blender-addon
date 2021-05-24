@@ -1,7 +1,7 @@
 import bpy, math
 from .video360_helper_functions import check_obj, duplicate_items, join_items, origin_to_gem, add_empty, make_child, emptytocenter, hide, white_background, select_activate, camera_view, delete_obj, makeparent, hidden_status, delete_extra_objects
 
-class Video_objectstocenter(bpy.types.Operator):
+class Video_OT_objectstocenter(bpy.types.Operator):
     """ """
     bl_label = "Objects to center"
     bl_idname = "object.objectstocenter"
@@ -9,7 +9,7 @@ class Video_objectstocenter(bpy.types.Operator):
     
     
     def execute(self, context):
-        global joined, initial_objects_list_name
+        global joined, initial_objects_list_name, empty_name
 
         initial_objects_list = list(bpy.context.selected_objects)
         initial_objects_list_name = [item.name for item in list(bpy.context.selected_objects)]
@@ -42,7 +42,7 @@ class Video_objectstocenter(bpy.types.Operator):
         return {'FINISHED'}
     
         
-class Video_camera(bpy.types.Operator):
+class Video_OT_camera(bpy.types.Operator):
     """ """
     bl_label = "Add camera"
     bl_idname = "object.addcamera"
@@ -52,7 +52,7 @@ class Video_camera(bpy.types.Operator):
     def execute(self, context):
         white_background()
         
-        dimensions = bpy.data.objects['joined'].dimensions
+        dimensions = bpy.data.objects[joined].dimensions
         rad = math.sqrt((dimensions[0]/2)**2 + (dimensions[1]/2)**2 + (dimensions[2]/2)**2)
         print(rad)
         
@@ -86,12 +86,26 @@ class Video_camera(bpy.types.Operator):
         
         camera_view()
         
-        makeparent()
+        makeparent(empty_name)
+        
+        return {'FINISHED'}
+    
+    
+class Video_OT_saveanimation(bpy.types.Operator):
+    """ """
+    bl_label = "Save animation"
+    bl_idname = "object.saveanimation"
+    bl_options = {"REGISTER", "UNDO"}
+    
+    def execute(self, context):
+        scene = context.scene
+        mytool = scene.my_tool
+
         select_activate(bpy.data.objects["360_empty"])
         bpy.context.scene.frame_end = 200
         
         
-        if self.preset_enum == 'OP1':
+        if mytool.axis_selection == 'OP1':
             for myframe in range (10, 190):
                 bpy.ops.transform.rotate(value=0.034906585, orient_axis='Y', orient_type='LOCAL', orient_matrix_type='LOCAL' , constraint_axis=(False, True, False))
                 bpy.data.objects['360_empty'].keyframe_insert(data_path = 'rotation_euler', frame = myframe)
@@ -100,18 +114,7 @@ class Video_camera(bpy.types.Operator):
                 bpy.ops.transform.rotate(value=0.034906585, orient_axis='Z', orient_type='LOCAL', orient_matrix_type='LOCAL' , constraint_axis=(False, False, True))
                 bpy.data.objects['360_empty'].keyframe_insert(data_path = 'rotation_euler', frame = myframe)
             
-        
-        return {'FINISHED'}
-    
-    
-class Video_saveanimation(bpy.types.Operator):
-    """ """
-    bl_label = "Save animation"
-    bl_idname = "object.saveanimation"
-    bl_options = {"REGISTER", "UNDO"}
-    
-    def execute(self, context):
-    
+
         hidden_status()
         bpy.context.scene.render.engine = 'BLENDER_WORKBENCH'
         bpy.context.scene.render.image_settings.file_format = 'FFMPEG'
@@ -124,6 +127,8 @@ class Video_saveanimation(bpy.types.Operator):
         filename = mytool.myfilename
         bpy.context.scene.render.filepath = filepath+filename
         bpy.ops.render.render(animation=True)
+        
+       
         
         return {'FINISHED'}
         

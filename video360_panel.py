@@ -1,5 +1,5 @@
 import bpy
-class Video(bpy.types.Panel):
+class Video_PT_Animation(bpy.types.Panel):
     """ """
     bl_label = "360 Animation"
     bl_idname = "360video_initialsetup"

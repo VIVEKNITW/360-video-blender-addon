@@ -23,9 +23,12 @@ bl_info = {
     "category" : "Generic"
 }
 
-import bpy
+import bpy 
+from .video360_inputs import video360RenderMyProperties
+from .video360_panel import Video_PT_Animation
+from .video360_operator import Video_OT_objectstocenter,Video_OT_camera, Video_OT_saveanimation, Image_OT_Clear 
 
-classes = ()
+classes = (video360RenderMyProperties, Video_PT_Animation, Video_OT_objectstocenter, Video_OT_camera, Video_OT_saveanimation, Image_OT_Clear)
 
 def register():
     for cls in classes:
